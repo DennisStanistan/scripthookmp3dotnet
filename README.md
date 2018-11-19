@@ -15,7 +15,6 @@ The project is in it's early stage of development, so it has issues that must be
 * Game will sometimes freeze if the game's window is not focused
 * Calling natives may crash the game sometimes
 * Calling natives may cause other .asi plguins that use UnknownModder's scripthook to crash which then will crash the game.
-* String arguements in `Function.Call` will crash the game, has something to do with my implementation.
 
 # Contribute
 You will need Visual Studio 2017, Windows SDK 8.1 (which you can get from the Visual Studio 2017 installer) with C++ cli support.
