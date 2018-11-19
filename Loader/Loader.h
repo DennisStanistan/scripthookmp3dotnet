@@ -133,6 +133,10 @@ namespace Loader {
 				return scriptType->GetField(variablename)->GetValue(Instance);
 			}
 
+			static void Cleanup() {
+				MP3::Native::Memory::CleanupPinnedStrings();
+			}
+
 			virtual String^ ToString() override {
 				StringBuilder^ sb = gcnew StringBuilder();
 				sb->AppendLine(String::Format("ScriptDomain: {0}", Filename));

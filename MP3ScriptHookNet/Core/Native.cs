@@ -2,9 +2,11 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
 using MP3ScriptHookNet;
 using MP3ScriptHookNet.Core;
 
@@ -19,51 +21,33 @@ namespace MP3
             uint NativeValue { get; set; }
         }
 
-        public static class Memory
+        public static unsafe class Memory
         {
-            /// <summary>
-            /// A dictionary that stores strings memory addresses.
-            /// </summary>
-            private static Dictionary<IntPtr, string> memoryStringPointers = new Dictionary<IntPtr, string>();
+            internal static IntPtr NullString => StringToCoTaskMemUTF8(string.Empty);
+            private static List<IntPtr> _pinnedStrings = new List<IntPtr>();
 
-            /// <summary>
-            /// Allocates a string in process' memory and returns it's memory address.
-            /// </summary>
-            /// <param name="str"></param>
-            /// <returns></returns>
-            internal static IntPtr AllocStringToMemory(string str)
+            public static void CleanupPinnedStrings()
             {
-                IntPtr addr = IntPtr.Zero;
-                IntPtr handle = Instance.ProcessHandle;
-                if (memoryStringPointers.ContainsValue(str))
-                    return memoryStringPointers.FirstOrDefault(x => x.Value == str).Key;
-
-                addr = VirtualAllocEx(handle, IntPtr.Zero, (uint)str.Length + 4, AllocationType.Commit, MemoryProtection.ExecuteReadWrite);
-
-                if (addr == IntPtr.Zero)
-                {
-                    Log.Print("ERROR", "Failed to allocate memory!");
-                    return IntPtr.Zero;
-                }
-
-                UIntPtr bytesWritten = UIntPtr.Zero;
-
-                if (!NativeMethods.WriteProcessMemory(handle, addr, Encoding.ASCII.GetBytes(str), (uint)str.Length + 4, out bytesWritten))
-                {
-                    Log.Print("Memory.WriteStringToMemory ERROR", "Could not write process memory!");
-                    return IntPtr.Zero;
-                }
-                else memoryStringPointers.Add(addr, str);
-
-                if (str.Length + 4 != (int)bytesWritten)
-                {
-                    Log.Print("Memory.WriteStringToMemory WARNING", "String length is not equal to the amount of bytes written.");
-                }
-
-                return addr;
+                _pinnedStrings.Clear();
             }
 
-            internal static unsafe string ReadNullTerminatedString(IntPtr ptr)
+            public static IntPtr PinString(string str)
+            {
+                IntPtr handle = StringToCoTaskMemUTF8(str);
+
+                if (handle == IntPtr.Zero)
+                {
+                    return NullString;
+                }
+                else
+                {
+                    _pinnedStrings.Add(handle);
+
+                    return handle;
+                }
+            }
+
+            internal static string ReadNullTerminatedString(IntPtr ptr)
 			{
                 // TODO: write a better method of acquiring the string from the memory address.
                 List<byte> stringBytes = new List<byte>();
@@ -78,6 +62,70 @@ namespace MP3
 
                 return Encoding.ASCII.GetString(stringBytes.ToArray());
 			}
+
+            internal static IntPtr StringToCoTaskMemUTF8(string s)
+            {
+                if (s == null)
+                {
+                    return IntPtr.Zero;
+                }
+                else
+                {
+                    unsafe
+                    {
+                        byte[] utf8Bytes = System.Text.Encoding.UTF8.GetBytes(s);
+                        IntPtr dest = Marshal.AllocCoTaskMem(utf8Bytes.Length + 1);
+                        if (dest == IntPtr.Zero)
+                        {
+                            throw new OutOfMemoryException();
+                        }
+
+                        Marshal.Copy(utf8Bytes, 0, dest, utf8Bytes.Length);
+                        ((byte*)dest.ToPointer())[utf8Bytes.Length] = 0;
+
+                        return dest;
+                    }
+                }
+            }
+
+            internal static string PtrToStringUTF8(IntPtr ptr, int byteLen)
+            {
+                if (byteLen < 0)
+                {
+                    throw new ArgumentException(null, nameof(byteLen));
+                }
+                else if (IntPtr.Zero == ptr)
+                {
+                    return null;
+                }
+                else if (byteLen == 0)
+                {
+                    return string.Empty;
+                }
+                else
+                {
+                    byte* pByte = (byte*)ptr.ToPointer();
+                    return System.Text.Encoding.UTF8.GetString(pByte, byteLen);
+                }
+            }
+
+            internal static string PtrToStringUTF8(IntPtr ptr)
+            {
+                if (IntPtr.Zero == ptr)
+                {
+                    return null;
+                }
+                unsafe
+                {
+                    byte* address = (byte*)ptr.ToPointer();
+                    int len = 0;
+
+                    while (address[len] != 0)
+                        ++len;
+
+                    return PtrToStringUTF8(ptr, len);
+                }
+            }
         }
 
         public static class Function
@@ -147,9 +195,8 @@ namespace MP3
 
                 if (type == typeof(string))
                 {
-                    // TODO: figure out why this crashes the game
-                    return (uint)Memory.AllocStringToMemory((string)value).ToInt32(); // crashes
-                    
+                    return (uint)Memory.PinString((string)(value)).ToInt32();
+
                 }
                 if (type == typeof(IntPtr))
                 {
@@ -215,7 +262,7 @@ namespace MP3
                         return String.Empty;
                     }
 
-                    return Memory.ReadNullTerminatedString(new IntPtr(address));
+                    return Memory.PtrToStringUTF8(new IntPtr(address));
                 }
 
                 if (type == typeof(IntPtr))

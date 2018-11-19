@@ -1,6 +1,5 @@
 #pragma once
-#include <windows.h>
-#include <winnt.h>
+#include <Windows.h>
 #include <stdlib.h>
 #include <cstdint>
 #include <fstream>

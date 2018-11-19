@@ -9,9 +9,10 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>MP3ScriptHookNet</RootNamespace>
     <AssemblyName>MP3ScriptHookNet</AssemblyName>
-    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -58,7 +59,6 @@
     <Compile Include="scripting\Math\Vector3.cs" />
     <Compile Include="scripting\Streaming\Streaming.cs" />
     <Compile Include="scripting\World\Entities\Ped.cs" />
-    <Compile Include="scripting\World\Model.cs" />
     <Compile Include="scripting\World\Player.cs" />
     <Compile Include="scripting\World\World.cs" />
   </ItemGroup>

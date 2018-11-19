@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Loader.h"
+#pragma managed
 
 #pragma region Implicit PInvoke Definitions
 [Runtime::InteropServices::DllImport("kernel32", CharSet = Runtime::InteropServices::CharSet::Unicode, SetLastError = false)]
@@ -12,6 +13,7 @@ ref struct LoaderData {
 };
 
 bool CompileScript(String^ file) {
+	
 	String^ filename = Path::GetFileName(file);
 
 	FileInfo^ sourceFile = gcnew FileInfo(file);
@@ -100,6 +102,11 @@ void LoadScripts() {
 	LoaderData::scriptsInitializationComplete = true;
 }
 
+void ReloadScripts() {
+	Loader::ScriptDomain::Cleanup();
+	LoadScripts();
+}
+
 void InitNetInstance() {
 	MP3ScriptHookNet::Instance::GameProcess = Process::GetCurrentProcess();
 }
@@ -123,25 +130,49 @@ void ManagedKeyboardMessage(unsigned long key, bool status, bool statusCtrl, boo
 	for (int i = 0; i < LoaderData::scriptDomains->Count; i++) {
 		LoaderData::scriptDomains[i]->CallScriptFunction(Loader::ScriptMethod::OnKey, args);
 	}
+	
 }
 
 #pragma unmanaged
 #pragma warning(disable:4717) // disable recursion warning
 
+bool sGameReloaded = false;
+PVOID sMainFib = nullptr;
+PVOID sScriptFib = nullptr;
+
+__inline PVOID GetCurrentFiber(void) { return (PVOID)(UINT_PTR)__readfsdword(0x10); }
+
 // TODO: some serious refactoring must be done here
 void main() {
-	LoadScripts();
+	sGameReloaded = true;
+	sMainFib = GetCurrentFiber();
 
-	ManagedInit();
-	while (true) {
-		if (GetAsyncKeyState(VK_INSERT) & 0x8000) {
-			break;
-		}
-		ManagedTick();
-		scriptWait(0);
+	LoadScripts();
+	if (sScriptFib == nullptr) {
+		const LPFIBER_START_ROUTINE FiberMain = [](LPVOID lpFiberParameter) {
+			while (true) {
+				ManagedInit();
+				sGameReloaded = false;
+				while (!sGameReloaded) {
+					ManagedTick();
+					SwitchToFiber(sMainFib);
+				}
+			}
+		};
+
+		sScriptFib = CreateFiber(0, FiberMain, nullptr);
 	}
 
-	main();
+
+	//ManagedInit();
+	while (true) {
+		scriptWait(0);
+
+		// Switch to our CLR fiber and wait for it to switch back.
+		SwitchToFiber(sScriptFib);
+	}
+
+	//main();
 }
 
 void ScriptMain() {

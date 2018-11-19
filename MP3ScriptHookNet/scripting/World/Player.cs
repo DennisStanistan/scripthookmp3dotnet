@@ -39,17 +39,6 @@ namespace MP3
         }
 
         /// <summary>
-        /// Gets the name of this <see cref="Player"/>.
-        /// </summary>
-        public string Name
-        {
-            get
-            {
-                return Function.Call<string>(Hash.GET_PLAYER_NAME, Handle);
-            }
-        }
-
-        /// <summary>
 		/// Gets a value indicating whether this <see cref="Player"/> is dead.
 		/// </summary>
 		/// <value>
