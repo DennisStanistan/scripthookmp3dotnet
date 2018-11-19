@@ -9,7 +9,7 @@ Works the same way as Crosire's V .NET scripthook (Insert to reload, scripts in 
 * [.NET Framework 4.5.2](https://www.microsoft.com/net/download/dotnet-framework-runtime/net452)
 
 # Downloads
-Due to the project's early stages of development, the issues that must be fixed and code that needs to be rewritten, a pre-built binary is not available. However you can download the repo and compile it.
+The project is in it's early stage of development, so it has issues that must be fixed and code that needs to be rewritten and as a result a pre-built binary isn't available for now. However you can download the repo and compile it.
 
 # Known Issues
 * Game will sometimes freeze if the game's window is not focused
