@@ -1,6 +1,6 @@
 # Max Payne 3 Scripthook .NET
 
-This is an ASI plugin for Max Payne 3 based on [UnknownModder's scripthook](https://unknownmodder.github.io/maxpayne3), this plugin that borrows some of [Crosire's SHVDN implementations](https://github.com/crosire/scripthookvdotnet).
+This is an ASI plugin for Max Payne 3 based on [UnknownModder's scripthook](https://unknownmodder.github.io/maxpayne3), this plugin borrows some of [Crosire's SHVDN](https://github.com/crosire/scripthookvdotnet) implementations.
 Works the same way as Crosire's V .NET scripthook (Insert to reload, scripts in /scripts, logs)
 
 # Requirements
