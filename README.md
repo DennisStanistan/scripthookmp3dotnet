@@ -6,7 +6,7 @@ Works the same way as Crosire's V .NET scripthook (Insert to reload, scripts in 
 # Requirements
 * [Max Payne 3 Scripthook by UnknownModder](https://unknownmodder.github.io/maxpayne3)
 * [Visual C++ Redistributable 2017 (x86)](https://support.microsoft.com/en-us/help/2977003/the-latest-supported-visual-c-downloads)
-* [.NET Framework 4.5.2](https://www.microsoft.com/net/download/dotnet-framework-runtime/net452)
+* [.NET Framework 4.7](https://www.microsoft.com/en-us/download/details.aspx?id=55170)
 
 # Downloads
 The project is in it's early stage of development, so it has issues that must be fixed and code that needs to be rewritten and as a result a pre-built binary isn't available for now. However you can download the repo and compile it.
