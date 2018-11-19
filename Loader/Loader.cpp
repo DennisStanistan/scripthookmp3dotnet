@@ -117,11 +117,13 @@ void ManagedInit() {
 	}
 }
 
-void ManagedTick()
+bool ManagedTick()
 {
 	for (int i = 0; i < LoaderData::scriptDomains->Count; i++) {
 		LoaderData::scriptDomains[i]->CallScriptFunction(Loader::ScriptMethod::OnTick);
 	}
+
+	return true;
 }
 
 void ManagedKeyboardMessage(unsigned long key, bool status, bool statusCtrl, bool statusShift, bool statusAlt)
@@ -142,8 +144,8 @@ PVOID sScriptFib = nullptr;
 
 __inline PVOID GetCurrentFiber(void) { return (PVOID)(UINT_PTR)__readfsdword(0x10); }
 
-// TODO: some serious refactoring must be done here
-void main() {
+void ScriptMain() {
+	srand(GetTickCount());
 	sGameReloaded = true;
 	sMainFib = GetCurrentFiber();
 
@@ -152,8 +154,7 @@ void main() {
 		const LPFIBER_START_ROUTINE FiberMain = [](LPVOID lpFiberParameter) {
 			while (true) {
 				ManagedInit();
-				sGameReloaded = false;
-				while (!sGameReloaded) {
+				while (ManagedTick()) {
 					ManagedTick();
 					SwitchToFiber(sMainFib);
 				}
@@ -163,21 +164,10 @@ void main() {
 		sScriptFib = CreateFiber(0, FiberMain, nullptr);
 	}
 
-
-	//ManagedInit();
 	while (true) {
 		scriptWait(0);
-
-		// Switch to our CLR fiber and wait for it to switch back.
 		SwitchToFiber(sScriptFib);
 	}
-
-	//main();
-}
-
-void ScriptMain() {
-	srand(GetTickCount());
-	main();
 }
 
 static void ScriptKeyboardMessage(DWORD key, WORD repeats, BYTE scanCode, BOOL isExtended, BOOL isWithAlt, BOOL wasDownBefore, BOOL isUpNow)
