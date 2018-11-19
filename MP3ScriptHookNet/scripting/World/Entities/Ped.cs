@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MP3.Math;
 using MP3.Native;
 
 namespace MP3
@@ -16,6 +17,18 @@ namespace MP3
     {
         public int Handle { get; private set; }
         public uint NativeValue { get; set; }
+
+        public Vector3 Position
+        {
+            get
+            {
+                return Function.Call<Vector3>(Hash.GET_PED_COORDS, Handle);
+            }
+            set
+            {
+                Function.Call(Hash.SET_PED_COORDS, Handle, value.X, value.Y, value.Z, false);
+            }
+        }
 
         public Gender Gender
         {

@@ -111,14 +111,20 @@ void InitNetInstance() {
 	MP3ScriptHookNet::Instance::GameProcess = Process::GetCurrentProcess();
 }
 
-void ManagedInit() {
+bool ManagedInit() {
 	for (int i = 0; i < LoaderData::scriptDomains->Count; i++) {
 		LoaderData::scriptDomains[i]->CallScriptFunction(Loader::ScriptMethod::Init);
 	}
+
+	return true;
 }
 
 bool ManagedTick()
 {
+	if (GetAsyncKeyState(VK_INSERT) & 0x8000) {
+		return false;
+	}
+
 	for (int i = 0; i < LoaderData::scriptDomains->Count; i++) {
 		LoaderData::scriptDomains[i]->CallScriptFunction(Loader::ScriptMethod::OnTick);
 	}
@@ -136,7 +142,6 @@ void ManagedKeyboardMessage(unsigned long key, bool status, bool statusCtrl, boo
 }
 
 #pragma unmanaged
-#pragma warning(disable:4717) // disable recursion warning
 
 bool sGameReloaded = false;
 PVOID sMainFib = nullptr;
@@ -144,29 +149,50 @@ PVOID sScriptFib = nullptr;
 
 __inline PVOID GetCurrentFiber(void) { return (PVOID)(UINT_PTR)__readfsdword(0x10); }
 
-void ScriptMain() {
-	srand(GetTickCount());
+void main() {
+
+#pragma region Fiber
+
+	// Fiber approach
+	/*
 	sGameReloaded = true;
 	sMainFib = GetCurrentFiber();
-
-	LoadScripts();
 	if (sScriptFib == nullptr) {
 		const LPFIBER_START_ROUTINE FiberMain = [](LPVOID lpFiberParameter) {
 			while (true) {
 				ManagedInit();
-				while (ManagedTick()) {
+				while (!sGameReloaded) {
 					ManagedTick();
 					SwitchToFiber(sMainFib);
 				}
+				//ReloadScripts();
 			}
 		};
 
 		sScriptFib = CreateFiber(0, FiberMain, nullptr);
 	}
 
+
+	//ManagedInit();
 	while (true) {
 		scriptWait(0);
+
 		SwitchToFiber(sScriptFib);
+	}*/
+#pragma endregion
+
+}
+
+void ScriptMain() {
+	srand(GetTickCount());
+	LoadScripts();
+	while (ManagedInit())
+	{
+		while (ManagedTick()) {
+			scriptWait(0);
+		}
+		ReloadScripts();
+		ScriptMain();
 	}
 }
 

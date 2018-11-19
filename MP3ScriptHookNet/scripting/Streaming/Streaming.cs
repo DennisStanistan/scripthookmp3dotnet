@@ -25,8 +25,6 @@ namespace MP3
             {
                 if (++ticks >= requestTimeout)
                     return false;
-
-                Thread.Sleep(0);
             }
 
             return true;
